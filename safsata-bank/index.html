@@ -1624,7 +1624,7 @@ function render(data){
   // --- Anonymous logging -------------------------------------------------
   // Paste your Google Apps Script Web App URL between the quotes to turn on
   // logging. Leave it empty and nothing is ever sent (fully offline).
-  const LOG_ENDPOINT = "";
+  const LOG_ENDPOINT = "https://script.google.com/macros/s/AKfycbzeuVErnT1tzZgrAs3rtdidspJSwbkYR-Xp9RLNRd0yFOV96dMTssRElSAT8LO3FSfvYA/exec";
   if(LOG_ENDPOINT){ const n = document.getElementById("logNote"); if(n) n.hidden = false; }
   function logSubmission(argument, verdict){
     if(!LOG_ENDPOINT) return;                 // logging off → stay offline
