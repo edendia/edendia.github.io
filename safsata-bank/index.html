@@ -84,6 +84,7 @@ html,body{margin:0; background:var(--void); min-height:100%;}
 .input::placeholder{color:var(--ink-dim);}
 .input:focus{border-color:var(--phos); box-shadow:0 0 0 1px var(--phos), 0 0 26px -8px var(--glow), inset 0 0 40px -30px var(--phos);}
 .composer-row{display:flex; align-items:center; justify-content:flex-end; gap:1rem; margin-top:1rem; flex-wrap:wrap;}
+.composer-note{font-family:var(--mono); font-size:.66rem; letter-spacing:.08em; color:var(--ink-soft); text-align:right; margin:.7rem 0 0; opacity:.75;}
 .gallery{margin-top:3.5rem;}
 .gallery-head{font-family:var(--mono); font-size:.7rem; text-transform:uppercase; letter-spacing:.24em; color:var(--ink-soft); margin:0 0 1.7rem; padding-bottom:.65rem; border-bottom:1px solid var(--rule);}
 .gallery-head::before{content:"// "; color:var(--phos);}
@@ -423,6 +424,7 @@ body.intro-open{overflow:hidden;}
       <div class="composer-row">
         <button class="check" id="check" type="button">Examine the form</button>
       </div>
+      <p class="composer-note" id="logNote" hidden>Submissions are logged anonymously to improve the Bank.</p>
     </section>
 
     <section class="result" id="result" hidden></section>
@@ -1619,10 +1621,28 @@ function render(data){
   const resultEl = document.getElementById("result");
   const examplesEl = document.getElementById("examples");
 
+  // --- Anonymous logging -------------------------------------------------
+  // Paste your Google Apps Script Web App URL between the quotes to turn on
+  // logging. Leave it empty and nothing is ever sent (fully offline).
+  const LOG_ENDPOINT = "";
+  if(LOG_ENDPOINT){ const n = document.getElementById("logNote"); if(n) n.hidden = false; }
+  function logSubmission(argument, verdict){
+    if(!LOG_ENDPOINT) return;                 // logging off → stay offline
+    try{
+      fetch(LOG_ENDPOINT, {
+        method: "POST",
+        mode: "no-cors",                       // fire-and-forget, no response read
+        headers: { "Content-Type": "text/plain;charset=utf-8" }, // avoids CORS preflight
+        body: JSON.stringify({ argument: argument, verdict: verdict })
+      }).catch(function(){});                   // never let logging break the checker
+    }catch(e){}
+  }
+
   function run(value, art, label){
     const trimmed = (value || "").trim();
     if(!trimmed){ resultEl.hidden = true; resultEl.innerHTML = ""; return; }
     const data = present(trimmed);
+    logSubmission(trimmed, data.verdict);
     resultEl.className = "result verdict-" + data.verdict + (art ? " has-art" : "");
     resultEl.innerHTML = render(data);
     if(art){
