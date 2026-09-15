@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loop — UX Behaviour Analytics</title>
+<style>
+:root{
+  --navy:#1F3864; --navy-dk:#15294A; --ink:#24324A; --slate:#5A6B85;
+  --muted:#8493AC; --line:#E7ECF4; --line2:#D5DEEC; --bg:#F6F8FC;
+  --panel:#FFFFFF; --ice:#EAF0F9; --teal:#1D9E75; --teal-dk:#0F6E56;
+  --teal-t:#E3F5EE; --amber:#B7791F; --amber-t:#FBF1DE; --red:#C0492F; --red-t:#Fbece7;
+  --shadow:0 1px 2px rgba(31,56,100,.05), 0 4px 18px rgba(31,56,100,.05);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  color:var(--ink); background:var(--bg); font-size:14px; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+.app{display:flex; min-height:100vh}
+
+/* ---------- sidebar ---------- */
+.side{
+  width:216px; flex:0 0 216px; background:var(--panel); border-right:1px solid var(--line);
+  padding:22px 14px; position:sticky; top:0; height:100vh; overflow-y:auto;
+}
+.brand{display:flex; align-items:center; gap:9px; padding:0 8px 4px}
+.brand .logo{width:26px;height:26px;border-radius:7px;background:var(--navy);
+  display:flex;align-items:center;justify-content:center}
+.brand .logo svg{display:block}
+.brand h1{font-size:15px; font-weight:600; margin:0; letter-spacing:-.2px; color:var(--ink)}
+.brand .sub{font-size:10.5px; color:var(--muted); margin:0; letter-spacing:.2px}
+.navlabel{font-size:10px; letter-spacing:1.3px; color:var(--muted); font-weight:600;
+  margin:20px 10px 7px; text-transform:uppercase}
+.nav a{
+  display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px;
+  color:var(--slate); text-decoration:none; font-size:13.5px; font-weight:500; cursor:pointer;
+  margin-bottom:1px; transition:background .12s,color .12s;
+}
+.nav a:hover{background:var(--bg); color:var(--ink)}
+.nav a.active{background:var(--ice); color:var(--navy); font-weight:600}
+.nav a .ic{width:16px;height:16px;flex:0 0 16px;opacity:.85}
+.side .foot{margin-top:22px; padding:10px; border-top:1px solid var(--line); font-size:11px; color:var(--muted)}
+.side .foot b{color:var(--slate); font-weight:600}
+
+/* ---------- main ---------- */
+.main{flex:1; min-width:0; padding:34px 44px 80px; max-width:1040px}
+.head{margin-bottom:22px}
+.eyebrow{font-size:11px; letter-spacing:1.4px; text-transform:uppercase; color:var(--teal-dk); font-weight:600; margin:0 0 6px}
+.head h2{font-size:23px; font-weight:600; margin:0 0 5px; letter-spacing:-.4px; color:var(--ink)}
+.head p{margin:0; color:var(--slate); font-size:14px; max-width:64ch}
+
+.section-label{font-size:11px; letter-spacing:1.2px; text-transform:uppercase; color:var(--muted); font-weight:600; margin:26px 0 12px}
+
+/* ---------- stat row ---------- */
+.stats{display:flex; gap:14px; flex-wrap:wrap; margin-bottom:6px}
+.stat{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px 18px; min-width:150px; box-shadow:var(--shadow)}
+.stat .n{font-size:26px; font-weight:600; color:var(--ink); letter-spacing:-.5px; line-height:1}
+.stat .l{font-size:12px; color:var(--slate); margin-top:6px}
+
+/* ---------- cards ---------- */
+.card{background:var(--panel); border:1px solid var(--line); border-radius:13px; padding:20px 22px; box-shadow:var(--shadow); margin-bottom:16px}
+.card.click{cursor:pointer; transition:border-color .12s, transform .08s, box-shadow .12s}
+.card.click:hover{border-color:var(--line2); transform:translateY(-1px); box-shadow:0 6px 22px rgba(31,56,100,.09)}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+@media(max-width:820px){.grid2{grid-template-columns:1fr} .main{padding:26px 20px 70px}}
+
+/* insight card */
+.insight .top{display:flex; align-items:flex-start; justify-content:space-between; gap:14px}
+.insight h3{font-size:15.5px; font-weight:600; margin:0 0 4px; color:var(--ink)}
+.insight .stat-line{font-size:14px; color:var(--ink); margin:0}
+.insight .hyp{font-size:13px; color:var(--slate); margin:12px 0 0; padding-left:12px; border-left:2px solid var(--line2)}
+.insight .evidence{margin:12px 0 0; padding:0; list-style:none}
+.insight .evidence li{font-size:12.5px; color:var(--slate); padding:2px 0 2px 18px; position:relative}
+.insight .evidence li:before{content:"›"; position:absolute; left:4px; color:var(--muted)}
+.insight .invest{font-size:12.5px; color:var(--teal-dk); margin:12px 0 0; font-weight:500}
+.insight .invest b{font-weight:600}
+
+.chip{display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px; letter-spacing:.3px; white-space:nowrap}
+.chip.high{background:var(--red-t); color:var(--red)}
+.chip.medium{background:var(--amber-t); color:var(--amber)}
+.chip.low{background:var(--ice); color:var(--navy)}
+.chip.teal{background:var(--teal-t); color:var(--teal-dk)}
+.chip.ghost{background:var(--bg); color:var(--slate); border:1px solid var(--line)}
+
+/* bars */
+.bar{background:var(--ice); border-radius:6px; height:9px; overflow:hidden}
+.bar > i{display:block; height:100%; background:var(--navy); border-radius:6px}
+.bar.teal > i{background:var(--teal)}
+.rowbar{display:grid; grid-template-columns:150px 1fr 52px; gap:12px; align-items:center; padding:6px 0}
+.rowbar .k{font-size:13px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.rowbar .v{font-size:12.5px; color:var(--slate); text-align:right; font-variant-numeric:tabular-nums}
+
+/* funnel */
+.funnel .step{margin:0 0 4px}
+.funnel .flabel{display:flex; justify-content:space-between; font-size:13px; margin-bottom:5px}
+.funnel .flabel .r{color:var(--slate); font-variant-numeric:tabular-nums}
+.funnel .track{background:var(--ice); border-radius:8px; height:34px; position:relative; overflow:hidden}
+.funnel .fill{height:100%; background:linear-gradient(90deg,var(--navy),#2C4E86); border-radius:8px; display:flex; align-items:center; padding-left:12px; color:#fff; font-size:12.5px; font-weight:600}
+.funnel .drop{font-size:11.5px; color:var(--red); text-align:right; margin:3px 2px 10px; font-weight:500}
+.funnel .step.click{cursor:pointer}
+.funnel .step.click:hover .track{outline:2px solid var(--line2); outline-offset:1px}
+
+/* journey flow */
+.flow{display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin:4px 0}
+.flow .node{background:var(--ice); color:var(--navy); border-radius:8px; padding:7px 12px; font-size:12.5px; font-weight:600; white-space:nowrap}
+.flow .node.teal{background:var(--teal-t); color:var(--teal-dk)}
+.flow .arw{color:var(--muted); font-size:13px}
+
+/* before/after columns */
+.ba{display:grid; grid-template-columns:1fr 1fr; gap:26px}
+.ba h4{font-size:12px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin:0 0 10px; font-weight:600}
+
+/* compare */
+.cmp{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+.cmp .col{border:1px solid var(--line); border-radius:12px; padding:18px}
+.cmp .col.win{border-color:var(--teal); background:var(--teal-t)}
+.cmp .col h4{margin:0 0 2px; font-size:14px; font-weight:600}
+.cmp .col .n{font-size:11.5px; color:var(--slate); margin:0 0 14px}
+.cmp .m{display:flex; justify-content:space-between; padding:8px 0; border-top:1px solid var(--line); font-size:13px}
+.cmp .m .mv{font-weight:600; font-variant-numeric:tabular-nums}
+.cmp .m.diff .mv{color:var(--teal-dk)}
+
+/* event table */
+.tbl{width:100%; border-collapse:collapse}
+.tbl th{font-size:11px; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); font-weight:600}
+.tbl td{padding:9px 10px; border-bottom:1px solid var(--line); font-size:13px; font-variant-numeric:tabular-nums}
+.tbl tr.click{cursor:pointer}
+.tbl tr.click:hover td{background:var(--bg)}
+.tbl td.name{font-weight:500; color:var(--ink); font-variant-numeric:normal}
+.tbl .mono{color:var(--slate)}
+
+/* selector pills */
+.pills{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px}
+.pill{border:1px solid var(--line2); background:var(--panel); color:var(--slate); border-radius:20px; padding:6px 14px; font-size:12.5px; cursor:pointer; font-weight:500}
+.pill:hover{border-color:var(--navy); color:var(--navy)}
+.pill.active{background:var(--navy); color:#fff; border-color:var(--navy)}
+
+/* timeline */
+.tl{list-style:none; padding:0; margin:0}
+.tl li{position:relative; padding:0 0 16px 24px; font-size:13px; color:var(--ink)}
+.tl li:before{content:""; position:absolute; left:5px; top:4px; width:8px; height:8px; border-radius:50%; background:var(--navy)}
+.tl li:after{content:""; position:absolute; left:8.5px; top:12px; bottom:-2px; width:1.5px; background:var(--line2)}
+.tl li:last-child{padding-bottom:0}
+.tl li:last-child:after{display:none}
+.tl li.wrong:before{background:var(--red)}
+.tl li.right:before{background:var(--teal)}
+.tl li .t{color:var(--muted); font-size:11.5px; margin-left:8px}
+
+/* AI analyst */
+.ai-wrap{display:flex; flex-direction:column; height:calc(100vh - 200px); min-height:420px}
+.ai-log{flex:1; overflow-y:auto; padding:4px 2px 10px}
+.ai-suggest{display:flex; gap:8px; flex-wrap:wrap; margin:2px 0 16px}
+.ai-suggest .s{background:var(--panel); border:1px solid var(--line2); border-radius:20px; padding:7px 13px; font-size:12.5px; color:var(--slate); cursor:pointer}
+.ai-suggest .s:hover{border-color:var(--navy); color:var(--navy)}
+.msg{margin-bottom:16px; max-width:760px}
+.msg.you{margin-left:auto}
+.msg.you .bub{background:var(--navy); color:#fff; border-radius:14px 14px 4px 14px; padding:11px 15px; font-size:13.5px; display:inline-block}
+.msg.ai .bub{background:var(--panel); border:1px solid var(--line); border-radius:14px 14px 14px 4px; padding:16px 18px; box-shadow:var(--shadow)}
+.ans .block{margin:0 0 12px}
+.ans .block:last-child{margin-bottom:0}
+.ans .lab{font-size:10.5px; text-transform:uppercase; letter-spacing:1px; font-weight:700; margin:0 0 3px}
+.ans .lab.obs{color:var(--navy)} .ans .lab.pat{color:var(--teal-dk)}
+.ans .lab.hyp{color:var(--amber)} .ans .lab.des{color:var(--slate)} .ans .lab.inv{color:var(--teal-dk)}
+.ans .block p{margin:0; font-size:13.5px; color:var(--ink)}
+.ans .caveat{font-size:11.5px; color:var(--muted); font-style:italic; margin-top:12px; padding-top:10px; border-top:1px dashed var(--line2)}
+.ai-input{display:flex; gap:10px; margin-top:6px}
+.ai-input input{flex:1; border:1px solid var(--line2); border-radius:22px; padding:11px 18px; font-size:14px; font-family:inherit; outline:none}
+.ai-input input:focus{border-color:var(--navy)}
+.ai-input button, .btn{background:var(--navy); color:#fff; border:none; border-radius:22px; padding:11px 20px; font-size:13.5px; font-weight:600; cursor:pointer; font-family:inherit}
+.ai-input button:hover, .btn:hover{background:var(--navy-dk)}
+.btn.ghost{background:var(--panel); color:var(--navy); border:1px solid var(--line2)}
+.btn.ghost:hover{background:var(--bg)}
+
+/* data view */
+.drop-zone{border:1.5px dashed var(--line2); border-radius:12px; padding:26px; text-align:center; color:var(--slate); background:var(--panel)}
+.drop-zone.hot{border-color:var(--teal); background:var(--teal-t)}
+.kv{display:flex; gap:8px; font-size:13px; padding:6px 0; border-bottom:1px solid var(--line)}
+.kv .k{color:var(--slate); width:150px} .kv .v{color:var(--ink); font-weight:500}
+.note{font-size:12.5px; color:var(--slate); background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin:10px 0}
+.hint-txt{font-size:12px; color:var(--muted); margin-top:8px}
+.callout{display:flex; gap:12px; align-items:flex-start; background:var(--ice); border:1px solid var(--line2); border-radius:12px; padding:14px 16px; margin:6px 0 4px}
+.callout .ic{flex:0 0 20px; color:var(--navy)}
+.callout .b{font-size:13px; color:var(--ink)}
+.callout .b b{font-weight:600}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+.spacer{height:8px}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side" id="side"></aside>
+  <main class="main" id="main"></main>
+</div>
+<script>
+/* ============================================================
+   LOOP — behavioural analytics core (engine + demo data)
+   Pure vanilla JS. Works in node (for testing) and browser.
+   ============================================================ */
+(function (root) {
+  'use strict';
+
+  // ---------- seeded RNG (deterministic demo data) ----------
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  // event -> screen mapping
+  const SCREEN_OF = {
+    app_opened: 'Home',
+    course_opened: 'Course',
+    lesson_opened: 'Lesson',
+    lesson_started: 'Lesson',
+    example_viewed: 'Example',
+    exercise_opened: 'Exercise',
+    hint_opened: 'Hint',
+    explanation_opened: 'Explanation',
+    answer_submitted: 'Exercise',
+    summary_opened: 'Summary',
+    back_clicked: 'Summary',
+    next_clicked: 'Exercise',
+    lesson_completed: 'Lesson'
+  };
+
+  // ---------- demo data generator ----------
+  // Produces realistic educational-app events with intentional UX patterns:
+  //  - heavy drop-off on Exercise 4 (Lesson 3)
+  //  - hint overuse correlated with incorrect answers
+  //  - backtracking to the lesson summary
+  //  - long dwell on the hard exercise
+  //  - week-2 regression so "what changed" has a real answer
+  function makeDemoData() {
+    const rnd = mulberry32(20260903);
+    const rand = () => rnd();
+    const pick = (arr) => arr[Math.floor(rand() * arr.length)];
+    const chance = (p) => rand() < p;
+
+    const events = [];
+    const NUSERS = 140;
+    const DAY = 86400000;
+    const start = Date.UTC(2026, 7, 17, 8, 0, 0); // Aug 17 2026
+    const span = 14 * DAY;
+
+    const lessons = [
+      { id: 'lesson_1', ex: 'ex_1', hard: false },
+      { id: 'lesson_2', ex: 'ex_2', hard: false },
+      { id: 'lesson_3', ex: 'ex_4', hard: true }, // the problem lesson
+    ];
+
+    let uid = 1000;
+    for (let u = 0; u < NUSERS; u++) {
+      uid++;
+      const user = 'u' + uid;
+      const nSessions = 1 + Math.floor(rand() * 3);
+      for (let s = 0; s < nSessions; s++) {
+        let t = start + Math.floor(rand() * span) + s * 3600000;
+        const week2 = (t - start) > span / 2; // second half of the window
+        const push = (event, screen, element, props) => {
+          events.push({ user, ts: t, event, screen: screen || SCREEN_OF[event] || 'Home', element: element || '', props: props || '' });
+        };
+        const step = (min, max) => { t += (min + rand() * (max - min)) * 1000; };
+
+        push('app_opened', 'Home', 'app'); step(2, 8);
+        push('course_opened', 'Course', 'course_card'); step(3, 10);
+
+        // walk lessons in order; may abandon between lessons
+        for (let li = 0; li < lessons.length; li++) {
+          const L = lessons[li];
+          // latent "struggle" for THIS lesson attempt — drives skipping, hints,
+          // backtracking, dwell and abandonment together, so completed vs
+          // abandoned journeys separate on interpretable axes.
+          let struggle = rand();
+          if (L.hard) struggle = Math.min(1, struggle + 0.30);
+          if (L.hard && week2) struggle = Math.min(1, struggle + 0.12);
+
+          push('lesson_opened', 'Lesson', L.id); step(2, 6);
+          push('lesson_started', 'Lesson', L.id); step(4, 14);
+
+          // example: struggling/rushing users skip it more often
+          const skipExample = chance(0.12 + struggle * 0.4);
+          if (!skipExample) { push('example_viewed', 'Example', L.id + '_example'); step(6, 22); }
+
+          push('exercise_opened', 'Exercise', L.ex);
+
+          // dwell rises with struggle (and the hard exercise)
+          if (L.hard) step(20 + struggle * 160, 60 + struggle * 200);
+          else step(6 + struggle * 30, 20 + struggle * 50);
+
+          // drop-off before answering — rises steeply with struggle
+          const pAbandon = Math.min(0.75, 0.04 + struggle * struggle * 0.7);
+          if (chance(pAbandon)) {
+            // dead-end backtracking to the summary before leaving
+            if (chance(0.4 + struggle * 0.4)) { push('back_clicked', 'Summary', L.id + '_summary'); step(3, 9); push('summary_opened', 'Summary', L.id + '_summary'); }
+            break; // session ends — abandoned
+          }
+
+          // hint usage before first answer — rises with struggle
+          let usedHint = false, hintCount = 0;
+          if (chance(0.08 + struggle * 0.55)) {
+            usedHint = true;
+            hintCount = 1 + (chance(0.3 + struggle * 0.4) ? 1 : 0) + (struggle > 0.6 && chance(0.4) ? 1 : 0);
+            for (let h = 0; h < hintCount; h++) { push('hint_opened', 'Hint', L.ex + '_hint'); step(4, 20); }
+          }
+
+          // mid-exercise backtrack to re-read instructions — rises with struggle
+          if (chance(0.05 + struggle * 0.35)) {
+            push('back_clicked', 'Summary', L.id + '_summary'); step(4, 14);
+            push('summary_opened', 'Summary', L.id + '_summary'); step(5, 16);
+            push('exercise_opened', 'Exercise', L.ex); step(6, 24); // return to exercise
+          }
+
+          // first answer — hint use associated with more incorrect answers
+          let pWrong = 0.15 + struggle * 0.4;
+          if (usedHint) pWrong += 0.2;
+          const firstWrong = chance(Math.min(pWrong, 0.85));
+          push('answer_submitted', 'Exercise', L.ex, firstWrong ? 'incorrect' : 'correct'); step(2, 6);
+
+          let solved = !firstWrong;
+          if (firstWrong) {
+            // recovery path: open explanation, try again
+            if (chance(0.72)) {
+              push('explanation_opened', 'Explanation', L.ex + '_explanation'); step(8, 30);
+              const secondWrong = chance(0.3);
+              push('answer_submitted', 'Exercise', L.ex, secondWrong ? 'incorrect' : 'correct'); step(2, 6);
+              solved = !secondWrong;
+            } else {
+              // gave up after wrong answer
+              solved = false;
+            }
+          }
+
+          if (!solved) { break; } // abandoned after struggling
+
+          push('next_clicked', 'Exercise', 'next_button'); step(2, 6);
+          push('lesson_completed', 'Lesson', L.id); step(3, 12);
+
+          // chance they end the session between lessons (natural stop)
+          if (chance(0.28)) break;
+        }
+      }
+    }
+
+    events.sort((a, b) => (a.user < b.user ? -1 : a.user > b.user ? 1 : a.ts - b.ts));
+    return events;
+  }
+
+  // ---------- sessionisation ----------
+  const GAP = 30 * 60 * 1000; // 30 min
+  function sessionize(events) {
+    const byUser = {};
+    for (const e of events) (byUser[e.user] = byUser[e.user] || []).push(e);
+    const sessions = [];
+    for (const user in byUser) {
+      const evs = byUser[user].slice().sort((a, b) => a.ts - b.ts);
+      let cur = null;
+      for (const e of evs) {
+        if (!cur || e.ts - cur.events[cur.events.length - 1].ts > GAP) {
+          cur = { user, events: [] };
+          sessions.push(cur);
+        }
+        cur.events.push(e);
+      }
+    }
+    return sessions;
+  }
+
+  // ---------- helpers ----------
+  function tally(arr) {
+    const m = {};
+    for (const x of arr) m[x] = (m[x] || 0) + 1;
+    return m;
+  }
+  function toSorted(mapObj, total) {
+    const out = Object.keys(mapObj).map(k => ({ key: k, count: mapObj[k], pct: total ? mapObj[k] / total : 0 }));
+    out.sort((a, b) => b.count - a.count);
+    return out;
+  }
+  const pctStr = (x) => Math.round(x * 100) + '%';
+  function fmtDur(ms) {
+    const s = Math.round(ms / 1000);
+    if (s < 60) return s + 's';
+    const m = Math.floor(s / 60), r = s % 60;
+    return m + 'm ' + (r < 10 ? '0' : '') + r + 's';
+  }
+
+  // ---------- engine ----------
+  function Engine(events) {
+    const sessions = sessionize(events);
+    const users = new Set(events.map(e => e.user));
+
+    function summary() {
+      return {
+        users: users.size,
+        sessions: sessions.length,
+        interactions: events.length,
+        span: events.length ? { from: Math.min(...events.map(e => e.ts)), to: Math.max(...events.map(e => e.ts)) } : null
+      };
+    }
+
+    function eventStats() {
+      const counts = {}, u = {};
+      for (const e of events) {
+        counts[e.event] = (counts[e.event] || 0) + 1;
+        (u[e.event] = u[e.event] || new Set()).add(e.user);
+      }
+      return Object.keys(counts).map(k => ({
+        event: k, count: counts[k], users: u[k].size,
+        perUser: counts[k] / u[k].size
+      })).sort((a, b) => b.count - a.count);
+    }
+
+    // before/after for an event name (immediate neighbours within a session)
+    function transitions(eventName) {
+      const before = [], after = [];
+      for (const s of sessions) {
+        const ev = s.events;
+        for (let i = 0; i < ev.length; i++) {
+          if (ev[i].event !== eventName) continue;
+          before.push(i > 0 ? ev[i - 1].event : '(session start)');
+          after.push(i < ev.length - 1 ? ev[i + 1].event : '(session end / exit)');
+        }
+      }
+      return {
+        occurrences: before.length,
+        before: toSorted(tally(before), before.length),
+        after: toSorted(tally(after), after.length)
+      };
+    }
+
+    // funnel for a lesson — denominator is users who opened the lesson
+    function funnel(lessonId) {
+      // strict, monotonic progression — Example is optional so it is NOT a
+      // funnel step (surfaced separately as a skipping pattern instead).
+      const steps = [
+        { key: 'lesson_opened', label: 'Lesson opened' },
+        { key: 'lesson_started', label: 'Lesson started' },
+        { key: 'exercise_opened', label: 'Exercise started' },
+        { key: 'answer_submitted', label: 'Answer submitted' },
+        { key: 'lesson_completed', label: 'Lesson completed' },
+      ];
+      // per-user: did they, within a session touching this lesson, reach each step?
+      const reached = steps.map(() => new Set());
+      for (const s of sessions) {
+        // consider the slice of the session belonging to this lesson
+        const touchesLesson = s.events.some(e => e.element === lessonId || (e.event === 'exercise_opened'));
+        if (!touchesLesson) continue;
+        // find events between this lesson_opened and the next lesson_opened
+        const ev = s.events;
+        for (let i = 0; i < ev.length; i++) {
+          if (ev[i].event === 'lesson_opened' && ev[i].element === lessonId) {
+            let j = i + 1;
+            while (j < ev.length && !(ev[j].event === 'lesson_opened' && ev[j].element !== lessonId)) j++;
+            const slice = ev.slice(i, j);
+            steps.forEach((st, k) => {
+              if (slice.some(e => e.event === st.key)) reached[k].add(s.user);
+            });
+          }
+        }
+      }
+      const base = reached[0].size || 1;
+      return steps.map((st, k) => ({
+        label: st.label, key: st.key,
+        users: reached[k].size,
+        pct: reached[k].size / base,
+        drop: k > 0 ? (reached[k - 1].size - reached[k].size) / (reached[k - 1].size || 1) : 0
+      }));
+    }
+
+    function lessonList() {
+      return Array.from(new Set(events.filter(e => e.event === 'lesson_opened').map(e => e.element)));
+    }
+    function screenList() {
+      return Array.from(new Set(events.map(e => e.screen)));
+    }
+
+    // screen-level analysis
+    function screenAnalysis(screen) {
+      let dwellTotal = 0, dwellN = 0, exits = 0, visits = 0, backs = 0;
+      const interactions = [], nextActions = [];
+      const repeatUsers = new Set();
+      for (const s of sessions) {
+        const ev = s.events;
+        const seenOnScreen = {};
+        for (let i = 0; i < ev.length; i++) {
+          if (ev[i].screen !== screen) continue;
+          visits++;
+          interactions.push(ev[i].event);
+          seenOnScreen[ev[i].event] = (seenOnScreen[ev[i].event] || 0) + 1;
+          if (i < ev.length - 1) {
+            dwellTotal += ev[i + 1].ts - ev[i].ts; dwellN++;
+            nextActions.push(ev[i + 1].event);
+            if (ev[i + 1].event === 'back_clicked') backs++;
+          } else {
+            exits++;
+            nextActions.push('(exit)');
+          }
+        }
+        for (const k in seenOnScreen) if (seenOnScreen[k] >= 2) repeatUsers.add(s.user + '|' + k);
+      }
+      return {
+        visits,
+        avgDwell: dwellN ? dwellTotal / dwellN : 0,
+        interactions: toSorted(tally(interactions), interactions.length),
+        nextActions: toSorted(tally(nextActions), nextActions.length),
+        exitRate: visits ? exits / visits : 0,
+        backRate: visits ? backs / visits : 0,
+      };
+    }
+
+    // friction detection
+    function friction() {
+      const out = [];
+      // 1. abandonment — opened an exercise but never submitted an answer in that session
+      let abandonSessions = 0, exerciseSessions = 0;
+      for (const s of sessions) {
+        const ev = s.events;
+        let opened = false, answered = false;
+        for (const e of ev) {
+          if (e.event === 'exercise_opened') opened = true;
+          if (e.event === 'answer_submitted') answered = true;
+        }
+        if (opened) { exerciseSessions++; if (!answered) abandonSessions++; }
+      }
+      out.push({
+        type: 'Abandonment',
+        count: abandonSessions, pct: exerciseSessions ? abandonSessions / exerciseSessions : 0,
+        detail: 'of sessions that open an exercise leave without submitting an answer',
+        interpretation: 'The exercise may be unclear, too hard, or the interface may not make the next action obvious.'
+      });
+      // 2. backtracking A -> B -> A (screen)
+      let backtrack = 0;
+      for (const s of sessions) {
+        const sc = s.events.map(e => e.screen);
+        for (let i = 2; i < sc.length; i++) if (sc[i] === sc[i - 2] && sc[i] !== sc[i - 1]) { backtrack++; break; }
+      }
+      out.push({
+        type: 'Backtracking',
+        count: backtrack, pct: backtrack / (sessions.length || 1),
+        detail: 'sessions return to a screen they just left (A → B → A)',
+        interpretation: 'Users may expect information on the second screen that is not there, or be re-checking instructions.'
+      });
+      // 3. long inactivity between two events (>90s)
+      let longGaps = 0, hardScreen = {};
+      for (const s of sessions) {
+        for (let i = 1; i < s.events.length; i++) {
+          const gap = s.events[i].ts - s.events[i - 1].ts;
+          if (gap > 90000) { longGaps++; hardScreen[s.events[i - 1].screen] = (hardScreen[s.events[i - 1].screen] || 0) + 1; }
+        }
+      }
+      out.push({
+        type: 'Long hesitation',
+        count: longGaps, pct: longGaps / (sessions.length || 1),
+        detail: 'gaps over 90s between two actions',
+        interpretation: 'A screen may be difficult, unclear, or the task may demand effort. Most common on: ' +
+          (toSorted(hardScreen).slice(0, 2).map(x => x.key).join(', ') || 'n/a') + '.'
+      });
+      // 4. assistance dependency (hint before answer)
+      let hintBefore = 0, answered = 0;
+      for (const s of sessions) {
+        const ev = s.events;
+        for (let i = 0; i < ev.length; i++) {
+          if (ev[i].event === 'answer_submitted') {
+            answered++;
+            // any hint since previous answer / start?
+            let j = i - 1, hint = false;
+            while (j >= 0 && ev[j].event !== 'answer_submitted') { if (ev[j].event === 'hint_opened') hint = true; j--; }
+            if (hint) hintBefore++;
+            break; // first answer only
+          }
+        }
+      }
+      out.push({
+        type: 'Assistance dependency',
+        count: hintBefore, pct: answered ? hintBefore / answered : 0,
+        detail: 'of first answers are preceded by opening a hint',
+        interpretation: 'The question may not give enough context to attempt without help.'
+      });
+      return out;
+    }
+
+    // completed vs abandoned for a lesson
+    function compareCompletion(lessonId) {
+      const groups = { completed: [], abandoned: [] };
+      for (const s of sessions) {
+        const ev = s.events;
+        for (let i = 0; i < ev.length; i++) {
+          if (ev[i].event === 'lesson_opened' && ev[i].element === lessonId) {
+            let j = i + 1;
+            while (j < ev.length && !(ev[j].event === 'lesson_opened' && ev[j].element !== lessonId)) j++;
+            const slice = ev.slice(i, j);
+            const done = slice.some(e => e.event === 'lesson_completed');
+            const hints = slice.filter(e => e.event === 'hint_opened').length;
+            const backs = slice.filter(e => e.event === 'back_clicked').length;
+            const exOpen = slice.find(e => e.event === 'exercise_opened');
+            const firstAns = slice.find(e => e.event === 'answer_submitted');
+            const ttfa = exOpen && firstAns ? firstAns.ts - exOpen.ts : null;
+            const sawExample = slice.some(e => e.event === 'example_viewed');
+            (done ? groups.completed : groups.abandoned).push({ hints, backs, ttfa, sawExample });
+            break;
+          }
+        }
+      }
+      const agg = (rows) => {
+        if (!rows.length) return { n: 0 };
+        const ttfas = rows.filter(r => r.ttfa != null).map(r => r.ttfa);
+        return {
+          n: rows.length,
+          avgHints: rows.reduce((a, r) => a + r.hints, 0) / rows.length,
+          avgBacks: rows.reduce((a, r) => a + r.backs, 0) / rows.length,
+          avgTTFA: ttfas.length ? ttfas.reduce((a, b) => a + b, 0) / ttfas.length : 0,
+          examplePct: rows.filter(r => r.sawExample).length / rows.length,
+        };
+      };
+      return { completed: agg(groups.completed), abandoned: agg(groups.abandoned) };
+    }
+
+    // top journeys (screen sequences), collapsing immediate repeats
+    function journeys(limit) {
+      const seqs = [];
+      const exitCounts = {};
+      let backtrackSessions = 0;
+      for (const s of sessions) {
+        const screens = [];
+        for (const e of s.events) {
+          const sc = e.screen;
+          if (!screens.length || screens[screens.length - 1] !== sc) screens.push(sc);
+        }
+        if (screens.length) {
+          seqs.push(screens.join(' › '));
+          exitCounts[screens[screens.length - 1]] = (exitCounts[screens[screens.length - 1]] || 0) + 1;
+        }
+        for (let i = 2; i < screens.length; i++) if (screens[i] === screens[i - 2]) { backtrackSessions++; break; }
+      }
+      return {
+        top: toSorted(tally(seqs), seqs.length).slice(0, limit || 6),
+        exits: toSorted(exitCounts, sessions.length).slice(0, 6),
+        backtrackPct: backtrackSessions / (sessions.length || 1),
+        total: seqs.length
+      };
+    }
+
+    // behavioural patterns overview
+    function patterns() {
+      const fr = friction();
+      const j = journeys(3);
+      const rapidSkip = (() => {
+        let n = 0, tot = 0;
+        for (const s of sessions) {
+          const opened = s.events.some(e => e.event === 'exercise_opened');
+          if (opened) { tot++; if (!s.events.some(e => e.event === 'example_viewed')) n++; }
+        }
+        return { count: n, pct: tot ? n / tot : 0 };
+      })();
+      const recovery = (() => {
+        let recov = 0, wrong = 0;
+        for (const s of sessions) {
+          const ev = s.events;
+          for (let i = 0; i < ev.length; i++) {
+            if (ev[i].event === 'answer_submitted' && ev[i].props === 'incorrect') {
+              wrong++;
+              if (ev.slice(i + 1).some(e => e.event === 'answer_submitted' && e.props === 'correct')) recov++;
+            }
+          }
+        }
+        return { count: recov, pct: wrong ? recov / wrong : 0 };
+      })();
+      return { friction: fr, journeys: j, rapidSkip, recovery };
+    }
+
+    // ranked "what should I fix" opportunities
+    function insights() {
+      const out = [];
+      // drop-off per lesson
+      for (const L of lessonList()) {
+        const f = funnel(L);
+        const exStep = f.find(s => s.key === 'exercise_opened');
+        const ansStep = f.find(s => s.key === 'answer_submitted');
+        if (exStep && ansStep && exStep.users >= 8) {
+          const leave = (exStep.users - ansStep.users) / exStep.users;
+          if (leave > 0.2) {
+            out.push({
+              impact: leave > 0.33 ? 'High' : 'Medium',
+              score: leave * exStep.users * 1.6,
+              title: humanLesson(L) + ' — drop-off after the exercise opens',
+              stat: pctStr(leave) + ' of users who open the exercise leave before submitting an answer.',
+              evidence: ['High abandonment at the exercise step', 'Elevated back-navigation on this lesson', 'Long time before first interaction'],
+              hypothesis: 'Users may not understand what the exercise is asking them to do.',
+              investigate: 'Review the exercise instructions and watch first-time users attempt it.'
+            });
+          }
+        }
+      }
+      // hint dependency
+      const fr = friction();
+      const hint = fr.find(f => f.type === 'Assistance dependency');
+      if (hint && hint.pct > 0.2) {
+        out.push({
+          impact: hint.pct > 0.3 ? 'High' : 'Medium',
+          score: hint.pct * 100,
+          title: 'Hint usage is unusually high',
+          stat: pctStr(hint.pct) + ' of users open the hint before their first answer.',
+          evidence: ['Hints opened before any attempt', 'Association with higher incorrect-answer rate'],
+          hypothesis: 'The question may not provide enough context to attempt on its own.',
+          investigate: 'Review the exercise wording; check whether first-timers know what is expected without the hint.'
+        });
+      }
+      // revisit instructions / backtracking
+      const bt = fr.find(f => f.type === 'Backtracking');
+      if (bt && bt.pct > 0.12) {
+        out.push({
+          impact: 'Medium',
+          score: bt.pct * 80,
+          title: 'Users frequently return to the lesson summary',
+          stat: pctStr(bt.pct) + ' of sessions leave a screen and immediately come back to it.',
+          evidence: ['A → B → A screen loops', 'Concentrated around the exercise and summary'],
+          hypothesis: 'Key information may be hard to find or hard to remember once the exercise begins.',
+          investigate: 'Check whether the instructions stay visible during the exercise.'
+        });
+      }
+      out.sort((a, b) => b.score - a.score);
+      return out;
+    }
+
+    // week-over-week change (splits window in half by time)
+    function weekChange() {
+      if (!events.length) return null;
+      const from = Math.min(...events.map(e => e.ts)), to = Math.max(...events.map(e => e.ts));
+      const mid = (from + to) / 2;
+      const half = (lo, hi) => {
+        const evs = events.filter(e => e.ts >= lo && e.ts < hi);
+        const eng = Engine(evs);
+        const fr = eng.friction();
+        // hard-lesson drop-off
+        const f = eng.funnel('lesson_3');
+        const ex = f.find(s => s.key === 'exercise_opened'), an = f.find(s => s.key === 'answer_submitted');
+        const drop = ex && ex.users ? (ex.users - an.users) / ex.users : 0;
+        return {
+          users: new Set(evs.map(e => e.user)).size,
+          hintPct: (fr.find(x => x.type === 'Assistance dependency') || {}).pct || 0,
+          hardDrop: drop
+        };
+      };
+      return { first: half(from, mid), second: half(mid, to + 1) };
+    }
+
+    function humanLesson(id) {
+      const n = (id.match(/(\d+)/) || [])[1];
+      return n ? 'Lesson ' + n : id;
+    }
+
+    return {
+      events, sessions, summary, eventStats, transitions, funnel, lessonList,
+      screenList, screenAnalysis, friction, compareCompletion, journeys,
+      patterns, insights, weekChange, humanLesson
+    };
+  }
+
+  const API = { makeDemoData, sessionize, Engine, fmtDur, pctStr, SCREEN_OF };
+  if (typeof module !== 'undefined' && module.exports) module.exports = API;
+  root.LOOP = API;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>
+/* ============================================================
+   LOOP — application UI (browser only). Uses window.LOOP core.
+   ============================================================ */
+(function () {
+  'use strict';
+  var L = window.LOOP;
+  var State = { engine: null, source: 'Demo data', view: 'overview' };
+  var pctStr = function (x) { return Math.round(x * 100) + '%'; };
+  var fmtDur = L.fmtDur;
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var nice = function (ev) { return String(ev).replace(/_/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); }); };
+  var num = function (n) { return n.toLocaleString('en-US'); };
+
+  // ---------- icons ----------
+  var IC = {
+    overview: 'M3 3h7v7H3zM14 3h7v4h-7zM14 10h7v11h-7zM3 13h7v8H3z',
+    journeys: 'M4 5h6M4 5a2 2 0 1 0 0-.01M14 5h6M20 5a2 2 0 1 0 0-.01M4 12h16M4 19h6M20 19h-6',
+    behavior: 'M4 19V5M4 19h16M8 16v-5M12 16V8M16 16v-8M20 16v-3',
+    screens: 'M3 4h18v12H3zM3 20h18M9 20v-4M15 20v-4',
+    dropoff: 'M4 4h16M6 8h12M8 12h8M10 16h4M11 20h2',
+    compare: 'M12 3v18M6 8l-3 3 3 3M18 8l3 3-3 3',
+    insights: 'M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1h6c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z',
+    ai: 'M12 2a5 5 0 0 1 5 5v1a5 5 0 0 1-1 3 5 5 0 0 1 1 3v1a5 5 0 0 1-10 0v-1a5 5 0 0 1 1-3 5 5 0 0 1-1-3V7a5 5 0 0 1 5-5zM9 9h.01M15 9h.01',
+    data: 'M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zM4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6'
+  };
+  function icon(name) {
+    return '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="' + IC[name] + '"/></svg>';
+  }
+
+  var NAV = [
+    { g: 'Explore', items: [['overview', 'Overview'], ['journeys', 'Journeys'], ['behavior', 'Behavior'], ['screens', 'Screens']] },
+    { g: 'Diagnose', items: [['dropoff', 'Drop-off'], ['compare', 'Compare'], ['insights', 'Insights']] },
+    { g: 'Ask & manage', items: [['ai', 'AI Analyst'], ['data', 'Data']] }
+  ];
+
+  // ---------- shell ----------
+  function renderShell() {
+    var side = '<div class="brand"><div class="logo"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M8 6a6 6 0 1 0 6 6"/><path d="M14 12l4-4M14 12l4 4"/></svg></div>' +
+      '<div><h1>Loop</h1><p class="sub">UX behaviour analytics</p></div></div>';
+    NAV.forEach(function (grp) {
+      side += '<div class="navlabel">' + grp.g + '</div><nav class="nav">';
+      grp.items.forEach(function (it) {
+        side += '<a data-view="' + it[0] + '">' + icon(it[0]) + '<span>' + it[1] + '</span></a>';
+      });
+      side += '</nav>';
+    });
+    side += '<div class="foot">Source: <b id="src">' + esc(State.source) + '</b><br>Insights are hypotheses to investigate, not proof.</div>';
+    document.getElementById('side').innerHTML = side;
+    document.getElementById('side').addEventListener('click', function (e) {
+      var a = e.target.closest('a[data-view]'); if (a) go(a.getAttribute('data-view'));
+    });
+  }
+
+  function setActive() {
+    [].forEach.call(document.querySelectorAll('.nav a'), function (a) {
+      a.classList.toggle('active', a.getAttribute('data-view') === State.view);
+    });
+  }
+
+  function go(view, params) {
+    State.view = view; setActive();
+    var m = document.getElementById('main'); m.scrollTop = 0;
+    VIEWS[view](m, params || {});
+    window.scrollTo(0, 0);
+  }
+
+  function head(eyebrow, title, sub) {
+    return '<div class="head"><p class="eyebrow">' + esc(eyebrow) + '</p><h2>' + esc(title) + '</h2>' +
+      (sub ? '<p>' + sub + '</p>' : '') + '</div>';
+  }
+
+  function rowbar(label, val, pct, teal) {
+    return '<div class="rowbar"><div class="k">' + esc(label) + '</div>' +
+      '<div class="bar' + (teal ? ' teal' : '') + '"><i style="width:' + Math.max(2, Math.round(pct * 100)) + '%"></i></div>' +
+      '<div class="v">' + val + '</div></div>';
+  }
+
+  // ================= VIEWS =================
+  var VIEWS = {};
+
+  VIEWS.overview = function (m) {
+    var e = State.engine, s = e.summary(), ins = e.insights(), wk = e.weekChange();
+    var html = head('What’s happening', 'Overview', 'A few behavioural signals worth your attention — not a wall of metrics. Click any card to dig in.');
+    html += '<div class="stats">' +
+      '<div class="stat"><div class="n">' + num(s.users) + '</div><div class="l">active users</div></div>' +
+      '<div class="stat"><div class="n">' + num(s.sessions) + '</div><div class="l">learning sessions</div></div>' +
+      '<div class="stat"><div class="n">' + num(s.interactions) + '</div><div class="l">interactions</div></div></div>';
+
+    if (wk && wk.first.users) {
+      var d = wk.second.hardDrop - wk.first.hardDrop;
+      if (Math.abs(d) >= 0.05) {
+        html += '<div class="callout"><span class="ic">' + miniIcon('trend') + '</span><div class="b"><b>What changed:</b> drop-off on Lesson 3 ' +
+          (d > 0 ? 'rose' : 'fell') + ' from ' + pctStr(wk.first.hardDrop) + ' to ' + pctStr(wk.second.hardDrop) +
+          ' between the first and second half of this window.</div></div>';
+      }
+    }
+
+    html += '<div class="section-label">Behavioural insights</div>';
+    ins.slice(0, 4).forEach(function (i, k) {
+      html += '<div class="card click insight" data-goto="' + (i.title.indexOf('drop-off') > -1 ? 'dropoff' : i.title.indexOf('Hint') > -1 ? 'behavior' : 'insights') + '">' +
+        '<div class="top"><div><h3>' + esc(i.title) + '</h3><p class="stat-line">' + esc(i.stat) + '</p></div>' +
+        '<span class="chip ' + i.impact.toLowerCase() + '">' + i.impact + ' impact</span></div>' +
+        '<p class="hyp">' + esc(i.hypothesis) + '</p></div>';
+    });
+    m.innerHTML = html;
+    [].forEach.call(m.querySelectorAll('[data-goto]'), function (c) {
+      c.addEventListener('click', function () { go(c.getAttribute('data-goto')); });
+    });
+  };
+
+  VIEWS.journeys = function (m) {
+    var e = State.engine, j = e.journeys(7);
+    var html = head('User journeys', 'How users actually move', 'The real paths through the product — including the ones you didn’t design. Divergence from the intended flow is itself an insight.');
+    // most common path as a flow
+    if (j.top.length) {
+      var top = j.top[0].key.split(' › ');
+      html += '<div class="card"><div class="section-label" style="margin-top:0">Most common path · ' + pctStr(j.top[0].pct) + ' of sessions</div><div class="flow">';
+      top.forEach(function (n, i) {
+        html += (i ? '<span class="arw">→</span>' : '') + '<span class="node' + (n === 'Exercise' ? ' teal' : '') + '">' + esc(n) + '</span>';
+      });
+      html += '</div></div>';
+    }
+    html += '<div class="grid2">';
+    html += '<div class="card"><div class="section-label" style="margin-top:0">Top paths</div>';
+    j.top.forEach(function (p) { html += rowbar(p.key.replace(/ › /g, ' › '), pctStr(p.pct), p.pct); });
+    html += '</div>';
+    html += '<div class="card"><div class="section-label" style="margin-top:0">Where sessions end</div>';
+    j.exits.forEach(function (x) { html += rowbar(x.key, pctStr(x.pct), x.pct, true); });
+    html += '<div class="note" style="margin-top:14px"><b>' + pctStr(j.backtrackPct) + '</b> of sessions loop back to a screen they just left — a common signal that something expected wasn’t where users looked for it.</div>';
+    html += '</div></div>';
+    m.innerHTML = html;
+  };
+
+  VIEWS.behavior = function (m, p) {
+    var e = State.engine, stats = e.eventStats();
+    var sel = p.event || stats[0].event;
+    var t = e.transitions(sel);
+    var html = head('Behaviour', 'Events & interaction paths', 'Pick any interaction to see what commonly happens right before and right after it.');
+    html += '<div class="grid2">';
+    // table
+    html += '<div class="card" style="padding:14px 16px"><table class="tbl"><thead><tr><th>Event</th><th style="text-align:right">Count</th><th style="text-align:right">Users</th><th style="text-align:right">/user</th></tr></thead><tbody>';
+    stats.forEach(function (r) {
+      html += '<tr class="click" data-ev="' + esc(r.event) + '"' + (r.event === sel ? ' style="background:var(--ice)"' : '') + '>' +
+        '<td class="name">' + esc(nice(r.event)) + '</td><td style="text-align:right">' + num(r.count) + '</td>' +
+        '<td style="text-align:right" class="mono">' + num(r.users) + '</td><td style="text-align:right" class="mono">' + r.perUser.toFixed(1) + '</td></tr>';
+    });
+    html += '</tbody></table></div>';
+    // before/after
+    html += '<div class="card"><div class="section-label" style="margin-top:0">Path around “' + esc(nice(sel)) + '” · ' + num(t.occurrences) + ' times</div><div class="ba"><div><h4>Before</h4>';
+    t.before.slice(0, 5).forEach(function (b) { html += miniRow(nice(b.key), pctStr(b.pct), b.pct); });
+    html += '</div><div><h4>After</h4>';
+    t.after.slice(0, 5).forEach(function (b) { html += miniRow(nice(b.key), pctStr(b.pct), b.pct, true); });
+    html += '</div></div></div>';
+    html += '</div>';
+    m.innerHTML = html;
+    [].forEach.call(m.querySelectorAll('tr[data-ev]'), function (r) {
+      r.addEventListener('click', function () { go('behavior', { event: r.getAttribute('data-ev') }); });
+    });
+  };
+
+  VIEWS.screens = function (m, p) {
+    var e = State.engine, screens = e.screenList();
+    var sel = p.screen || 'Exercise';
+    if (screens.indexOf(sel) < 0) sel = screens[0];
+    var a = e.screenAnalysis(sel);
+    var html = head('Screen analysis', 'Life on one screen', 'How users experience a single screen — time spent, what they do, and where they go next.');
+    html += '<div class="pills">' + screens.map(function (sc) {
+      return '<span class="pill' + (sc === sel ? ' active' : '') + '" data-screen="' + esc(sc) + '">' + esc(sc) + '</span>';
+    }).join('') + '</div>';
+    html += '<div class="stats" style="margin-bottom:16px">' +
+      '<div class="stat"><div class="n">' + fmtDur(a.avgDwell) + '</div><div class="l">avg time before next action</div></div>' +
+      '<div class="stat"><div class="n">' + pctStr(a.exitRate) + '</div><div class="l">leave the app from here</div></div>' +
+      '<div class="stat"><div class="n">' + pctStr(a.backRate) + '</div><div class="l">go back from here</div></div></div>';
+    html += '<div class="grid2">';
+    html += '<div class="card"><div class="section-label" style="margin-top:0">What users do here</div>';
+    a.interactions.slice(0, 5).forEach(function (x) { html += miniRow(nice(x.key), pctStr(x.pct), x.pct); });
+    html += '</div><div class="card"><div class="section-label" style="margin-top:0">Where they go next</div>';
+    a.nextActions.slice(0, 5).forEach(function (x) { html += miniRow(x.key === '(exit)' ? 'Exit the app' : nice(x.key), pctStr(x.pct), x.pct, true); });
+    html += '</div></div>';
+    // representative timeline
+    var tl = sampleTimeline(e, sel);
+    if (tl) {
+      html += '<div class="card"><div class="section-label" style="margin-top:0">A representative session through this screen</div>' + tl + '</div>';
+    }
+    m.innerHTML = html;
+    [].forEach.call(m.querySelectorAll('[data-screen]'), function (c) {
+      c.addEventListener('click', function () { go('screens', { screen: c.getAttribute('data-screen') }); });
+    });
+  };
+
+  VIEWS.dropoff = function (m, p) {
+    var e = State.engine, lessons = e.lessonList();
+    var sel = p.lesson || worstLesson(e);
+    if (lessons.indexOf(sel) < 0) sel = lessons[0];
+    var f = e.funnel(sel);
+    var html = head('Drop-off', 'Where users disappear', 'Each step is the share of users who reached it. Click the biggest drop to see what they did just before leaving.');
+    html += '<div class="pills">' + lessons.map(function (ls) {
+      return '<span class="pill' + (ls === sel ? ' active' : '') + '" data-lesson="' + esc(ls) + '">' + esc(e.humanLesson(ls)) + '</span>';
+    }).join('') + '</div>';
+    html += '<div class="card funnel">';
+    var maxDropIdx = 1; for (var i = 1; i < f.length; i++) if (f[i].drop > f[maxDropIdx].drop) maxDropIdx = i;
+    f.forEach(function (st, k) {
+      var isBig = k === maxDropIdx && st.drop > 0.15;
+      html += '<div class="step' + (k > 0 ? ' click' : '') + '" data-step="' + k + '">' +
+        '<div class="flabel"><span>' + esc(st.label) + (isBig ? ' <span class="chip high" style="margin-left:6px">biggest drop</span>' : '') + '</span>' +
+        '<span class="r">' + num(st.users) + ' users · ' + pctStr(st.pct) + '</span></div>' +
+        '<div class="track"><div class="fill" style="width:' + Math.max(6, Math.round(st.pct * 100)) + '%">' + pctStr(st.pct) + '</div></div>';
+      if (st.drop > 0.01) html += '<div class="drop">↓ ' + pctStr(st.drop) + ' lost here</div>'; else html += '<div class="spacer"></div>';
+      html += '</div>';
+    });
+    html += '</div><div id="dropdetail"></div>';
+    m.innerHTML = html;
+    function detail(k) {
+      var st = f[k], prev = f[k - 1];
+      var t = e.transitions(prev.key);
+      var box = '<div class="card"><div class="section-label" style="margin-top:0">After “' + esc(prev.label) + '”, before the drop</div>' +
+        '<p class="small muted" style="margin-top:0">Immediately after users did <b>' + esc(nice(prev.key)) + '</b>, they went to:</p>';
+      t.after.slice(0, 5).forEach(function (b) {
+        box += miniRow(b.key.indexOf('exit') > -1 ? 'Left / exited' : nice(b.key), pctStr(b.pct), b.pct, b.key.indexOf('exit') > -1);
+      });
+      box += '<div class="note" style="margin-top:12px">Of the ' + num(prev.users) + ' users who reached “' + esc(prev.label) + ',” <b>' + num(prev.users - st.users) + '</b> (' + pctStr(st.drop) + ') did not reach “' + esc(st.label) + '.” Worth watching what they were doing in the moments before.</div></div>';
+      document.getElementById('dropdetail').innerHTML = box;
+    }
+    [].forEach.call(m.querySelectorAll('[data-lesson]'), function (c) { c.addEventListener('click', function () { go('dropoff', { lesson: c.getAttribute('data-lesson') }); }); });
+    [].forEach.call(m.querySelectorAll('[data-step]'), function (c) {
+      var k = +c.getAttribute('data-step'); if (k > 0) c.addEventListener('click', function () { detail(k); });
+    });
+    if (maxDropIdx > 0) detail(maxDropIdx);
+  };
+
+  VIEWS.compare = function (m, p) {
+    var e = State.engine, lessons = e.lessonList();
+    var sel = p.lesson || worstLesson(e);
+    if (lessons.indexOf(sel) < 0) sel = lessons[0];
+    var c = e.compareCompletion(sel);
+    var html = head('Completed vs abandoned', 'What separates the two', 'Behaviour of users who finished a lesson versus those who left — far more useful than demographics.');
+    html += '<div class="pills">' + lessons.map(function (ls) {
+      return '<span class="pill' + (ls === sel ? ' active' : '') + '" data-lesson="' + esc(ls) + '">' + esc(e.humanLesson(ls)) + '</span>';
+    }).join('') + '</div>';
+    function col(title, g, win) {
+      var rows = [
+        ['Avg hints opened', g.avgHints != null ? g.avgHints.toFixed(2) : '–'],
+        ['Avg back-navigations', g.avgBacks != null ? g.avgBacks.toFixed(2) : '–'],
+        ['Time to first answer', g.avgTTFA ? fmtDur(g.avgTTFA) : '–'],
+        ['Viewed the example', g.examplePct != null ? pctStr(g.examplePct) : '–']
+      ];
+      return '<div class="col' + (win ? ' win' : '') + '"><h4>' + title + '</h4><p class="n">' + (g.n || 0) + ' user-attempts</p>' +
+        rows.map(function (r) { return '<div class="m"><span>' + r[0] + '</span><span class="mv">' + r[1] + '</span></div>'; }).join('') + '</div>';
+    }
+    html += '<div class="cmp">' + col('Completed', c.completed, true) + col('Abandoned', c.abandoned, false) + '</div>';
+    // biggest separators narrative
+    var diffs = [];
+    if (c.completed.n && c.abandoned.n) {
+      diffs.push(['back-navigations', c.abandoned.avgBacks, c.completed.avgBacks]);
+      diffs.push(['example views', c.abandoned.examplePct, c.completed.examplePct]);
+    }
+    html += '<div class="card" style="margin-top:16px"><div class="section-label" style="margin-top:0">Biggest behavioural differences</div>' +
+      '<p style="margin:0 0 6px">Users who <b>abandoned</b> ' + esc(e.humanLesson(sel)) + ' navigated backwards <b>' +
+      (c.completed.avgBacks ? (c.abandoned.avgBacks / c.completed.avgBacks).toFixed(1) + '×' : 'far') + ' more often</b> than those who completed it, and were <b>' +
+      Math.round((c.completed.examplePct - c.abandoned.examplePct) * 100) + ' points less likely</b> to have viewed the worked example first.</p>' +
+      '<p class="hint-txt">This is an association worth investigating, not proof that skipping the example causes drop-off.</p></div>';
+    m.innerHTML = html;
+    [].forEach.call(m.querySelectorAll('[data-lesson]'), function (cc) { cc.addEventListener('click', function () { go('compare', { lesson: cc.getAttribute('data-lesson') }); }); });
+  };
+
+  VIEWS.insights = function (m) {
+    var e = State.engine, ins = e.insights();
+    var html = head('What should I fix?', 'UX opportunities, ranked', 'The product’s point: leave with a short list of concrete things worth investigating — each with evidence and a hypothesis, never a verdict.');
+    ins.forEach(function (i, k) {
+      html += '<div class="card insight"><div class="top"><div><h3>' + (k + 1) + '. ' + esc(i.title) + '</h3><p class="stat-line">' + esc(i.stat) + '</p></div>' +
+        '<span class="chip ' + i.impact.toLowerCase() + '">' + i.impact + ' impact</span></div>' +
+        '<ul class="evidence">' + i.evidence.map(function (ev) { return '<li>' + esc(ev) + '</li>'; }).join('') + '</ul>' +
+        '<p class="hyp"><b>Possible hypothesis:</b> ' + esc(i.hypothesis) + '</p>' +
+        '<p class="invest"><b>Investigate:</b> ' + esc(i.investigate) + '</p></div>';
+    });
+    if (!ins.length) html += '<div class="card">No strong friction signals in this dataset — that’s a good sign, or a sign the events don’t capture the friction points yet.</div>';
+    m.innerHTML = html;
+  };
+
+  // ---------- AI analyst ----------
+  var AI_LOG = [];
+  var SUGGEST = [
+    'Where are users struggling the most?',
+    'What should I investigate first?',
+    'What happens before users abandon an exercise?',
+    'Do users rely too much on hints?',
+    'Which screens have the most backtracking?',
+    'What changed this week?',
+    'Find unusual behaviour'
+  ];
+  VIEWS.ai = function (m) {
+    var html = head('AI UX Analyst', 'Ask the data a question', 'Ask in plain language. Answers are computed from your actual events and structured the way a UX researcher would reason — observation, then interpretation, clearly separated.');
+    html += '<div class="ai-wrap"><div class="ai-suggest">' +
+      SUGGEST.map(function (s) { return '<span class="s">' + esc(s) + '</span>'; }).join('') + '</div>' +
+      '<div class="ai-log" id="ailog"></div>' +
+      '<div class="ai-input"><input id="aiq" placeholder="e.g. why might users drop off in Lesson 3?" autocomplete="off"><button id="aisend">Ask</button></div></div>';
+    m.innerHTML = html;
+    var log = document.getElementById('ailog');
+    function draw() {
+      log.innerHTML = AI_LOG.map(renderMsg).join('') || '<p class="muted small" style="padding:10px 2px">Try a suggested question above, or ask your own.</p>';
+      log.scrollTop = log.scrollHeight;
+    }
+    function ask(q) {
+      q = (q || '').trim(); if (!q) return;
+      AI_LOG.push({ who: 'you', text: q });
+      AI_LOG.push({ who: 'ai', ans: analyst(q) });
+      draw();
+    }
+    document.getElementById('aisend').addEventListener('click', function () { var i = document.getElementById('aiq'); ask(i.value); i.value = ''; });
+    document.getElementById('aiq').addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ask(this.value); this.value = ''; } });
+    [].forEach.call(m.querySelectorAll('.ai-suggest .s'), function (s) { s.addEventListener('click', function () { ask(s.textContent); }); });
+    draw();
+  };
+  function renderMsg(msg) {
+    if (msg.who === 'you') return '<div class="msg you"><div class="bub">' + esc(msg.text) + '</div></div>';
+    var a = msg.ans, b = '<div class="msg ai"><div class="bub"><div class="ans">';
+    a.blocks.forEach(function (bl) {
+      b += '<div class="block"><p class="lab ' + bl.cls + '">' + bl.lab + '</p><p>' + bl.text + '</p></div>';
+    });
+    if (a.caveat) b += '<div class="caveat">' + a.caveat + '</div>';
+    b += '</div></div></div>';
+    return b;
+  }
+
+  // ---------- Data view ----------
+  VIEWS.data = function (m) {
+    var e = State.engine, s = e.summary(), stats = e.eventStats();
+    var from = s.span ? new Date(s.span.from) : null, to = s.span ? new Date(s.span.to) : null;
+    var html = head('Data', 'Import & manage', 'Upload a CSV of user events, or explore the built-in demo dataset. Columns are detected automatically.');
+    html += '<div class="grid2"><div>' +
+      '<div class="drop-zone" id="dz"><div style="font-weight:600;color:var(--ink);margin-bottom:4px">Drop a CSV here or click to choose</div>' +
+      '<div class="small">Expected columns: user_id, timestamp, event, screen, element, properties</div>' +
+      '<input type="file" id="file" accept=".csv,.tsv,text/csv" style="display:none"></div>' +
+      '<div style="display:flex;gap:10px;margin-top:12px"><button class="btn ghost" id="demo">Reload demo data</button>' +
+      '<button class="btn ghost" id="tmpl">Download CSV template</button></div>' +
+      '<div id="importmsg"></div></div>';
+    html += '<div class="card"><div class="section-label" style="margin-top:0">Current dataset</div>' +
+      '<div class="kv"><span class="k">Source</span><span class="v">' + esc(State.source) + '</span></div>' +
+      '<div class="kv"><span class="k">Users</span><span class="v">' + num(s.users) + '</span></div>' +
+      '<div class="kv"><span class="k">Sessions</span><span class="v">' + num(s.sessions) + '</span></div>' +
+      '<div class="kv"><span class="k">Events</span><span class="v">' + num(s.interactions) + '</span></div>' +
+      '<div class="kv"><span class="k">Distinct events</span><span class="v">' + stats.length + '</span></div>' +
+      (from ? '<div class="kv"><span class="k">Date range</span><span class="v">' + from.toISOString().slice(0, 10) + ' → ' + to.toISOString().slice(0, 10) + '</span></div>' : '') +
+      '</div>';
+    html += '<div class="card"><div class="section-label" style="margin-top:0">Detected events</div>';
+    stats.forEach(function (r) { html += miniRow(nice(r.event), num(r.count), r.count / stats[0].count); });
+    html += '</div></div>';
+    m.innerHTML = html;
+    var dz = document.getElementById('dz'), file = document.getElementById('file');
+    dz.addEventListener('click', function () { file.click(); });
+    dz.addEventListener('dragover', function (ev) { ev.preventDefault(); dz.classList.add('hot'); });
+    dz.addEventListener('dragleave', function () { dz.classList.remove('hot'); });
+    dz.addEventListener('drop', function (ev) { ev.preventDefault(); dz.classList.remove('hot'); if (ev.dataTransfer.files[0]) readFile(ev.dataTransfer.files[0]); });
+    file.addEventListener('change', function () { if (file.files[0]) readFile(file.files[0]); });
+    document.getElementById('demo').addEventListener('click', function () { loadDemo(); go('data'); });
+    document.getElementById('tmpl').addEventListener('click', downloadTemplate);
+  };
+
+  function readFile(f) {
+    var r = new FileReader();
+    r.onload = function () {
+      try {
+        var res = importCSV(r.result);
+        State.engine = L.Engine(res.events); State.source = f.name + ' (' + num(res.events.length) + ' events)';
+        document.getElementById('src').textContent = State.source;
+        go('data');
+        var box = document.getElementById('importmsg');
+        if (box) box.innerHTML = '<div class="note" style="margin-top:12px">✓ Imported <b>' + num(res.events.length) + '</b> events from <b>' + res.userCount + '</b> users. Mapped columns: ' + esc(res.mapDesc) + '.</div>';
+      } catch (err) {
+        var b2 = document.getElementById('importmsg');
+        if (b2) b2.innerHTML = '<div class="note" style="margin-top:12px;border-color:var(--red);color:var(--red)">Could not read that file: ' + esc(err.message) + '</div>';
+      }
+    };
+    r.readAsText(f);
+  }
+
+  function downloadTemplate() {
+    var csv = 'user_id,timestamp,event,screen,element,properties\n' +
+      'u1001,2026-08-17T10:32:01,lesson_opened,Lesson,lesson_3,\n' +
+      'u1001,2026-08-17T10:33:15,exercise_opened,Exercise,ex_4,\n' +
+      'u1001,2026-08-17T10:34:02,hint_opened,Hint,ex_4_hint,\n' +
+      'u1001,2026-08-17T10:35:14,answer_submitted,Exercise,ex_4,incorrect\n';
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    a.download = 'loop_events_template.csv'; a.click();
+  }
+
+  // ---------- CSV import ----------
+  function parseCSV(text) {
+    var rows = [], row = [], cur = '', q = false, i, c;
+    text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    var delim = (text.split('\n')[0].indexOf('\t') > -1 && text.split('\n')[0].indexOf(',') < 0) ? '\t' : ',';
+    for (i = 0; i < text.length; i++) {
+      c = text[i];
+      if (q) { if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; }
+      else if (c === '"') q = true;
+      else if (c === delim) { row.push(cur); cur = ''; }
+      else if (c === '\n') { row.push(cur); rows.push(row); row = []; cur = ''; }
+      else cur += c;
+    }
+    if (cur.length || row.length) { row.push(cur); rows.push(row); }
+    return rows.filter(function (r) { return r.length > 1 || (r.length === 1 && r[0].trim()); });
+  }
+  var SYN = {
+    user: ['user_id', 'user', 'userid', 'uid', 'user id', 'anonymous_id', 'distinct_id'],
+    ts: ['timestamp', 'time', 'ts', 'datetime', 'date', 'created_at', 'event_time'],
+    event: ['event', 'event_name', 'action', 'name', 'type'],
+    screen: ['screen', 'page', 'view', 'context'],
+    element: ['element', 'target', 'object', 'component'],
+    props: ['properties', 'props', 'value', 'meta', 'detail', 'result']
+  };
+  function parseTs(v, idx) {
+    v = String(v).trim();
+    if (/^\d+$/.test(v)) { var n = +v; return v.length >= 12 ? n : n * 1000; }
+    if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(v)) { var p = v.split(':').map(Number); return Date.UTC(2026, 0, 1) + ((p[0] * 3600) + (p[1] * 60) + (p[2] || 0)) * 1000; }
+    var d = Date.parse(v); if (!isNaN(d)) return d;
+    return Date.UTC(2026, 0, 1) + (idx || 0) * 1000;
+  }
+  function importCSV(text) {
+    var rows = parseCSV(text);
+    if (!rows.length) throw new Error('no rows found');
+    var header = rows[0].map(function (h) { return h.trim().toLowerCase(); });
+    var known = 0; header.forEach(function (h) { for (var k in SYN) if (SYN[k].indexOf(h) > -1) known++; });
+    var map = {}, hasHeader = known >= 2, dataRows;
+    if (hasHeader) {
+      for (var key in SYN) { map[key] = -1; for (var j = 0; j < header.length; j++) if (SYN[key].indexOf(header[j]) > -1 && map[key] < 0) map[key] = j; }
+      dataRows = rows.slice(1);
+    } else {
+      map = { user: 0, ts: 1, event: 2, screen: 3, element: 4, props: 5 };
+      dataRows = rows;
+    }
+    if (map.user < 0 || map.event < 0) throw new Error('need at least a user and an event column');
+    var events = [], users = {};
+    dataRows.forEach(function (r, idx) {
+      if (!r[map.event]) return;
+      var ev = {
+        user: (r[map.user] || 'unknown').trim(),
+        ts: map.ts > -1 ? parseTs(r[map.ts], idx) : Date.UTC(2026, 0, 1) + idx * 1000,
+        event: (r[map.event] || '').trim(),
+        screen: map.screen > -1 && r[map.screen] ? r[map.screen].trim() : (L.SCREEN_OF[(r[map.event] || '').trim()] || 'Unknown'),
+        element: map.element > -1 && r[map.element] ? r[map.element].trim() : '',
+        props: map.props > -1 && r[map.props] ? r[map.props].trim() : ''
+      };
+      if (!ev.event) return;
+      users[ev.user] = 1; events.push(ev);
+    });
+    if (!events.length) throw new Error('no valid events parsed');
+    events.sort(function (a, b) { return a.user < b.user ? -1 : a.user > b.user ? 1 : a.ts - b.ts; });
+    var md = Object.keys(map).filter(function (k) { return map[k] > -1; }).map(function (k) { return k + '→col' + (map[k] + 1); }).join(', ');
+    return { events: events, userCount: Object.keys(users).length, mapDesc: (hasHeader ? 'by header' : 'by position') + ' (' + md + ')' };
+  }
+
+  // ---------- small render helpers ----------
+  function miniRow(label, val, pct, teal) {
+    return '<div class="rowbar" style="grid-template-columns:130px 1fr 46px"><div class="k">' + esc(label) + '</div>' +
+      '<div class="bar' + (teal ? ' teal' : '') + '"><i style="width:' + Math.max(2, Math.round(pct * 100)) + '%"></i></div>' +
+      '<div class="v">' + val + '</div></div>';
+  }
+  function miniIcon(n) {
+    if (n === 'trend') return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8M21 7v5M21 7h-5"/></svg>';
+    return '';
+  }
+  function worstLesson(e) {
+    var best = null, worst = 0;
+    e.lessonList().forEach(function (ls) {
+      var f = e.funnel(ls); var ex = null, an = null;
+      f.forEach(function (s) { if (s.key === 'exercise_opened') ex = s; if (s.key === 'answer_submitted') an = s; });
+      if (ex && an && ex.users >= 6) { var d = (ex.users - an.users) / ex.users; if (d > worst) { worst = d; best = ls; } }
+    });
+    return best || e.lessonList()[0];
+  }
+  function sampleTimeline(e, screen) {
+    var best = null;
+    e.sessions.forEach(function (s) {
+      if (best) return;
+      var hasScreen = s.events.some(function (x) { return x.screen === screen; });
+      var hasHint = s.events.some(function (x) { return x.event === 'hint_opened'; });
+      var wrong = s.events.some(function (x) { return x.props === 'incorrect'; });
+      var right = s.events.some(function (x) { return x.props === 'correct'; });
+      if (hasScreen && hasHint && wrong && right && s.events.length <= 14) best = s;
+    });
+    if (!best) { e.sessions.forEach(function (s) { if (!best && s.events.some(function (x) { return x.screen === screen; }) && s.events.length >= 5 && s.events.length <= 12) best = s; }); }
+    if (!best) return '';
+    var t0 = best.events[0].ts;
+    return '<ul class="tl">' + best.events.map(function (x) {
+      var cls = x.props === 'incorrect' ? ' class="wrong"' : x.props === 'correct' ? ' class="right"' : '';
+      var label = nice(x.event) + (x.props ? ' — ' + x.props : '');
+      return '<li' + cls + '>' + esc(label) + '<span class="t">+' + fmtDur(x.ts - t0) + '</span></li>';
+    }).join('') + '</ul>';
+  }
+
+  // ================= AI ANALYST =================
+  function B(lab, cls, text) { return { lab: lab, cls: cls, text: text }; }
+  function analyst(q) {
+    var e = State.engine, ql = q.toLowerCase();
+    var has = function () { for (var i = 0; i < arguments.length; i++) if (ql.indexOf(arguments[i]) > -1) return true; return false; };
+    var fr = e.friction();
+    var frMap = {}; fr.forEach(function (f) { frMap[f.type] = f; });
+    var ins = e.insights();
+
+    // what changed / week
+    if (has('chang', 'week', 'recently', 'trend')) {
+      var wk = e.weekChange();
+      if (wk && wk.first.users) {
+        var d = wk.second.hardDrop - wk.first.hardDrop;
+        return {
+          blocks: [
+            B('Observation', 'obs', 'Comparing the first and second half of this window, Lesson 3 drop-off went from <b>' + pctStr(wk.first.hardDrop) + '</b> to <b>' + pctStr(wk.second.hardDrop) + '</b>, and hint-before-answer usage from <b>' + pctStr(wk.first.hintPct) + '</b> to <b>' + pctStr(wk.second.hintPct) + '</b>.'),
+            B('Pattern', 'pat', (d > 0 ? 'Drop-off is worsening on the hardest lesson while activity ' + (wk.second.users < wk.first.users ? 'thins out' : 'holds') + '.' : 'Drop-off eased slightly over the window.')),
+            B('Design question', 'des', 'Did anything about Lesson 3 (content, wording, or the exercise) change between the two periods?'),
+            B('Suggested investigation', 'inv', 'Line the drop-off shift up against any release or content edits in that window.')
+          ],
+          caveat: 'A window split is a rough before/after, not a controlled comparison.'
+        };
+      }
+    }
+    // hints
+    if (has('hint', 'help', 'assist')) {
+      var h = frMap['Assistance dependency'];
+      return {
+        blocks: [
+          B('Observation', 'obs', '<b>' + pctStr(h.pct) + '</b> of first answers are preceded by opening a hint (' + num(h.count) + ' cases).'),
+          B('Pattern', 'pat', 'Hint use is associated with a higher incorrect-answer rate afterwards — the users who need hints are also the ones getting stuck.'),
+          B('Hypothesis', 'hyp', 'The question may not carry enough context to attempt on its own, so users reach for the hint before really trying.'),
+          B('Design question', 'des', 'Is the exercise prompt clear enough without the hint? Should key context move into the prompt itself?'),
+          B('Suggested investigation', 'inv', 'Watch a few first-time users attempt the exercise with hints hidden, and note where they hesitate.')
+        ],
+        caveat: 'Association only — opening a hint doesn’t necessarily cause the wrong answer; both may reflect a harder question.'
+      };
+    }
+    // backtracking
+    if (has('back', 'revisit', 'return', 'loop')) {
+      var bt = frMap['Backtracking'];
+      return {
+        blocks: [
+          B('Observation', 'obs', '<b>' + pctStr(bt.pct) + '</b> of sessions leave a screen and immediately come back to it, most often between the exercise and the lesson summary.'),
+          B('Pattern', 'pat', 'This A → B → A looping clusters around the exercise — users appear to go back to re-read something.'),
+          B('Hypothesis', 'hyp', 'Instructions or key information may not stay visible once the exercise starts, forcing users to hunt for it.'),
+          B('Design question', 'des', 'Could the essential instruction stay on-screen during the exercise?'),
+          B('Suggested investigation', 'inv', 'Check what’s on the summary screen that users keep going back for.')
+        ],
+        caveat: 'Backtracking can also be healthy re-checking — confirm intent before treating it as a defect.'
+      };
+    }
+    // drop-off / abandon
+    if (has('drop', 'abandon', 'leave', 'quit', 'stuck', 'struggl', 'problem', 'worst', 'hardest', 'friction')) {
+      var ls = worstLesson(e), f = e.funnel(ls), ex = null, an = null;
+      f.forEach(function (s) { if (s.key === 'exercise_opened') ex = s; if (s.key === 'answer_submitted') an = s; });
+      var leave = ex && an ? (ex.users - an.users) / ex.users : 0;
+      var t = e.transitions('exercise_opened');
+      return {
+        blocks: [
+          B('Observation', 'obs', 'The sharpest struggle is on <b>' + esc(e.humanLesson(ls)) + '</b>: <b>' + pctStr(leave) + '</b> of users who open the exercise leave before submitting an answer.'),
+          B('Pattern', 'pat', 'Right after opening the exercise, users split: ' + t.after.slice(0, 3).map(function (b) { return nice(b.key) + ' ' + pctStr(b.pct); }).join(', ') + '. Abandoners also backtrack and hesitate more than finishers.'),
+          B('Hypothesis', 'hyp', 'Users may not understand what the exercise is asking, so they stall, seek help, or leave.'),
+          B('Design question', 'des', 'Is it obvious what to do the moment the exercise opens?'),
+          B('Suggested investigation', 'inv', 'Open the Drop-off view for ' + esc(e.humanLesson(ls)) + ' and watch what users do in the seconds before they disappear.')
+        ],
+        caveat: 'A hypothesis to test with real users — not proof of a usability defect.'
+      };
+    }
+    // priority / first
+    if (has('first', 'priorit', 'fix', 'important', 'start')) {
+      if (!ins.length) return { blocks: [B('Observation', 'obs', 'No strong friction signals stand out in this dataset yet.')], caveat: '' };
+      var i0 = ins[0];
+      return {
+        blocks: [
+          B('Observation', 'obs', 'The highest-impact signal is: <b>' + esc(i0.title) + '</b> — ' + esc(i0.stat)),
+          B('Pattern', 'pat', i0.evidence.join('; ') + '.'),
+          B('Hypothesis', 'hyp', esc(i0.hypothesis)),
+          B('Design question', 'des', 'If this were fixed, would it unblock the largest group of users?'),
+          B('Suggested investigation', 'inv', esc(i0.investigate) + ' The full ranked list is on the Insights tab.')
+        ],
+        caveat: 'Ranked by rough impact (share of users × severity), meant to focus attention, not to decide for you.'
+      };
+    }
+    // unusual
+    if (has('unusual', 'unexpected', 'weird', 'strange', 'surprising', 'anomal')) {
+      var p = e.patterns();
+      return {
+        blocks: [
+          B('Observation', 'obs', '<b>' + pctStr(p.rapidSkip.pct) + '</b> of users skip the worked example and jump straight into the exercise; <b>' + pctStr(p.journeys.backtrackPct) + '</b> of sessions loop back on themselves.'),
+          B('Pattern', 'pat', 'A chunk of users bypass the very content designed to prepare them, then struggle — skipping and backtracking travel together.'),
+          B('Hypothesis', 'hyp', 'The example may not look valuable or relevant enough to be worth the tap.'),
+          B('Design question', 'des', 'Does the example look skippable? Should it be more clearly tied to the exercise?'),
+          B('Suggested investigation', 'inv', 'Compare outcomes for users who viewed the example vs. those who skipped it (Compare tab).')
+        ],
+        caveat: 'Skipping isn’t automatically bad — some users may already know the material.'
+      };
+    }
+    // journeys / path
+    if (has('journey', 'path', 'flow', 'navigat', 'move')) {
+      var j = e.journeys(3);
+      return {
+        blocks: [
+          B('Observation', 'obs', 'The most common route is <b>' + esc(j.top[0].key) + '</b> (' + pctStr(j.top[0].pct) + ' of sessions).'),
+          B('Pattern', 'pat', 'Most sessions end on ' + j.exits.slice(0, 2).map(function (x) { return x.key + ' (' + pctStr(x.pct) + ')'; }).join(' or ') + ', and ' + pctStr(j.backtrackPct) + ' loop backwards at least once.'),
+          B('Design question', 'des', 'Do the real paths match the flow you designed — and if not, where do they diverge?'),
+          B('Suggested investigation', 'inv', 'Open the Journeys tab to see the full set of paths and exits.')
+        ],
+        caveat: 'Common paths describe behaviour; they don’t tell you whether users were satisfied.'
+      };
+    }
+    // fallback
+    return {
+      blocks: [
+        B('Observation', 'obs', 'This dataset has <b>' + num(e.summary().users) + '</b> users across <b>' + num(e.summary().sessions) + '</b> sessions. The strongest signal right now is ' + (ins[0] ? '<b>' + esc(ins[0].title.toLowerCase()) + '</b> (' + esc(ins[0].stat) + ')' : 'fairly clean behaviour') + '.'),
+        B('Design question', 'des', 'Try asking about drop-off, hints, backtracking, unusual behaviour, or what changed this week.'),
+        B('Suggested investigation', 'inv', 'The Insights tab lists the ranked opportunities; the AI here can go deeper on any of them.')
+      ],
+      caveat: 'I answer from the event data only — I won’t invent numbers that aren’t there.'
+    };
+  }
+
+  // ---------- boot ----------
+  function loadDemo() { State.engine = L.Engine(L.makeDemoData()); State.source = 'Demo data · educational app'; var s = document.getElementById('src'); if (s) s.textContent = State.source; }
+  window.addEventListener('DOMContentLoaded', function () {
+    renderShell(); loadDemo(); go('overview');
+  });
+})();
+</script>
+</body>
+</html>
